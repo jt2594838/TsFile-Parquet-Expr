@@ -23,9 +23,9 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainclass>
+                            <mainClass>
                                 expr.ParquetGenerator
-                            </mainclass>
+                            </mainClass>
                         </manifest>
                     </archive>
                 </configuration>
