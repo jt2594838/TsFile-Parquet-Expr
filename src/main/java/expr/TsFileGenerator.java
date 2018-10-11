@@ -10,14 +10,13 @@ import cn.edu.tsinghua.tsfile.timeseries.write.record.datapoint.FloatDataPoint;
 import cn.edu.tsinghua.tsfile.timeseries.write.record.datapoint.IntDataPoint;
 import cn.edu.tsinghua.tsfile.timeseries.write.record.datapoint.LongDataPoint;
 import datagen.DataGenerator;
-import datagen.GeneratorFactor;
+import datagen.GeneratorFactory;
 import hadoop.HDFSOutputStream;
-import static cons.Constants.*;
 
 import java.io.File;
 import java.io.IOException;
 
-import static cons.Constants.sensorNum;
+import static cons.Constants.*;
 
 public class TsFileGenerator {
 
@@ -39,7 +38,7 @@ public class TsFileGenerator {
         monitorThread = new MonitorThread();
         monitorThread.start();
         initWriter();
-        dataGenerator = GeneratorFactor.INSTANCE.getGenerator();
+        dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
         for(int i = 0; i < ptNum; i ++) {
             Object value = dataGenerator.next();
             for(int j = 0; j < deviceNum; j ++) {
@@ -73,11 +72,53 @@ public class TsFileGenerator {
         timeConsumption = System.currentTimeMillis() - startTime;
     }
 
-    public static void main(String[] args) throws IOException, WriteProcessException {
+    private void genNonalign() throws IOException, WriteProcessException {
+        long startTime = System.currentTimeMillis();
+        monitorThread = new MonitorThread();
+        monitorThread.start();
+        initWriter();
+        dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
+        for(int i = 0; i < ptNum; i ++) {
+            Object value = dataGenerator.next();
+            for(int j = 0; j < deviceNum; j ++) {
+                for (int k = 0; k < sensorNum; k++) {
+                    TSRecord record = new TSRecord((long) ((i + 1) * sensorNum + k), DEVICE_PREFIX + j);
+                    DataPoint point = null;
+                    switch (dataType) {
+                        case DOUBLE:
+                            point = new DoubleDataPoint(SENSOR_PREFIX + k, (double) value);
+                            break;
+                        case FLOAT:
+                            point = new FloatDataPoint(SENSOR_PREFIX + k, (float) value);
+                            break;
+                        case INT32:
+                            point = new IntDataPoint(SENSOR_PREFIX + k, (int) value);
+                            break;
+                        case INT64:
+                            point = new LongDataPoint(SENSOR_PREFIX + k, (long) value);
+                    }
+                    record.addTuple(point);
+                    writer.write(record);
+                }
+            }
+            if ((i + 1) % (ptNum / 100) == 0) {
+                // System.out.println(String.format("Progress: %d%%", (i + 1)*100 / ptNum));
+            }
+        }
+        writer.close();
+        writer = null;
+        monitorThread.interrupt();
+        timeConsumption = System.currentTimeMillis() - startTime;
+    }
+
+    private static void run() throws IOException, WriteProcessException {
         double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
         for (int i = 0; i < repetition; i ++) {
             TsFileGenerator generator = new TsFileGenerator();
-            generator.gen();
+            if (align)
+                generator.gen();
+            else
+                generator.genNonalign();
             double avgSpd = (sensorNum * deviceNum * ptNum) / (generator.timeConsumption / 1000.0);
             double memUsage = generator.monitorThread.getMaxMemUsage() / (1024.0 * 1024.0);
             totAvgSpd += avgSpd;
@@ -94,5 +135,18 @@ public class TsFileGenerator {
         System.out.println(String.format("DeviceNum: %d; SensorNum: %d; PtPerCol: %d; Wave: %s", deviceNum, sensorNum, ptNum, wave));
         System.out.println(String.format("Total Avg speed : %fpt/s; Total max memory usage: %fMB; File size: %fMB",
                 totAvgSpd / repetition, totMemUsage / repetition, totFileSize / repetition));
+    }
+
+    public static void main(String[] args) throws IOException, WriteProcessException {
+        filePath = "expr2.ts";
+        align = true;
+        deviceNum = 500;
+        sensorNum = 10;
+        repetition = 1;
+        keepFile = true;
+        for (int pNum : new int[]{10000}) {
+            ptNum = pNum;
+            run();
+        }
     }
 }

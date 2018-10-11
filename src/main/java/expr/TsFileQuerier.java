@@ -1,6 +1,9 @@
 package expr;
 
 import cn.edu.tsinghua.tsfile.common.utils.ITsRandomAccessFileReader;
+import cn.edu.tsinghua.tsfile.timeseries.filterV2.TimeFilter;
+import cn.edu.tsinghua.tsfile.timeseries.filterV2.expression.QueryFilter;
+import cn.edu.tsinghua.tsfile.timeseries.filterV2.expression.impl.GlobalTimeFilter;
 import cn.edu.tsinghua.tsfile.timeseries.read.support.Path;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.MetadataQuerierByFileImpl;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.SeriesChunkLoaderImpl;
@@ -8,11 +11,12 @@ import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryDataSet;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryExpression;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.query.impl.QueryExecutorRouter;
 import hadoop.HDFSInputStream;
-import static cons.Constants.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static cons.Constants.*;
 
 public class TsFileQuerier {
 
@@ -35,19 +39,37 @@ public class TsFileQuerier {
 
         QueryExpression expression = QueryExpression.create();
         expression.setSelectSeries(selectPaths);
+        if (useFilter) {
+            QueryFilter queryFilter;
+            if (align)
+                queryFilter = new GlobalTimeFilter(TimeFilter.lt((long)(ptNum * selectRate)));
+            else
+                queryFilter = new GlobalTimeFilter(TimeFilter.lt((long) ((ptNum * selectRate+ 1) * sensorNum)));
+            expression.setQueryFilter(queryFilter);
+        }
 
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
         QueryDataSet dataSet = router.execute(expression);
-        timeConsumption = System.currentTimeMillis() - startTime;
+        while (dataSet.hasNext()) {
+            dataSet.next().getTimestamp();
+        }
+        timeConsumption = System.nanoTime() - startTime;
     }
 
-    public static void main(String[] args) throws IOException {
+    private static void run() throws IOException {
         long totContumption = 0;
         for (int i = 0; i < repetition; i++) {
             TsFileQuerier test = new TsFileQuerier();
             test.testQuery();
             totContumption += test.timeConsumption;
         }
-        System.out.println(String.format("Time consumption: %dms", totContumption / repetition));
+        System.out.println(String.format("Time consumption: %dns", totContumption / repetition));
+    }
+
+    public static void main(String[] args) throws IOException {
+        filePath = "expr2.ts";
+        useFilter = false;
+        selectNum = 1;
+        run();
     }
 }
