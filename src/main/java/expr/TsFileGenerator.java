@@ -16,6 +16,9 @@ import hadoop.HDFSOutputStream;
 import java.io.File;
 import java.io.IOException;
 
+import com.csvreader.CsvReader;
+import com.csvreader.CsvWriter;
+
 import static cons.Constants.*;
 
 public class TsFileGenerator {
@@ -39,33 +42,66 @@ public class TsFileGenerator {
         monitorThread.start();
         initWriter();
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
+        // Write the data into the .csv file.
+        CsvWriter csvWriter = new CsvWriter(tmpPath);
+        String [] tmpRecord = new String[sensorNum + 2];
         for(int i = 0; i < ptNum; i ++) {
             Object value = dataGenerator.next();
             for(int j = 0; j < deviceNum; j ++) {
-                TSRecord record = new TSRecord(i + 1, DEVICE_PREFIX + j);
+            	tmpRecord[0] = String.valueOf(i + 1);
+            	tmpRecord[1] = DEVICE_PREFIX + String.valueOf(j);
                 for (int k = 0; k < sensorNum; k++) {
-                    DataPoint point = null;
                     switch (dataType) {
                         case DOUBLE:
-                            point = new DoubleDataPoint(SENSOR_PREFIX + k, (double) value);
+                            tmpRecord[k + 2] = "DOUBLE";
                             break;
                         case FLOAT:
-                            point = new FloatDataPoint(SENSOR_PREFIX + k, (float) value);
+                            tmpRecord[k + 2] = "FLOAT";
                             break;
                         case INT32:
-                            point = new IntDataPoint(SENSOR_PREFIX + k, (int) value);
+                            tmpRecord[k + 2] = "INT32";
                             break;
                         case INT64:
-                            point = new LongDataPoint(SENSOR_PREFIX + k, (long) value);
+                            tmpRecord[k + 2] = "INT64";
                     }
-                    record.addTuple(point);
+                    tmpRecord[k + 2] += "#" + SENSOR_PREFIX + String.valueOf(k) + "#" + String.valueOf(value);
                 }
-                writer.write(record);
+                csvWriter.writeRecord(tmpRecord);
             }
             if ((i + 1) % (ptNum / 100) == 0) {
                 // System.out.println(String.format("Progress: %d%%", (i + 1)*100 / ptNum));
             }
         }
+        csvWriter.close();
+        csvWriter = null;
+        // Read the data from the .csv file and write it into the .ts file.
+        CsvReader csvReader = new CsvReader(tmpPath);
+        csvReader.setSafetySwitch(false);
+        while (csvReader.readRecord()) {
+        	tmpRecord = csvReader.getValues();
+        	TSRecord record = new TSRecord(Long.parseLong(tmpRecord[0]), tmpRecord[1]);
+        	for (int i = 0; i < sensorNum; i++) {
+                DataPoint point = null;
+        		String [] tmpPointList = tmpRecord[i + 2].split("#");
+        		switch (tmpPointList[0]) {
+	                case "DOUBLE":
+	                    point = new DoubleDataPoint(tmpPointList[1], Double.parseDouble(tmpPointList[2]));
+	                    break;
+	                case "FLOAT":
+	                    point = new FloatDataPoint(tmpPointList[1], Float.parseFloat(tmpPointList[2]));
+	                    break;
+	                case "INT32":
+	                    point = new IntDataPoint(tmpPointList[1], Integer.parseInt(tmpPointList[2]));
+	                    break;
+	                case "INT64":
+	                    point = new LongDataPoint(tmpPointList[1], Long.parseLong(tmpPointList[2]));
+	            }
+        		record.addTuple(point);
+        	}
+        	writer.write(record);
+        }
+        csvReader.close();
+        csvReader = null;
         writer.close();
         writer = null;
         monitorThread.interrupt();
@@ -78,33 +114,64 @@ public class TsFileGenerator {
         monitorThread.start();
         initWriter();
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
+        // Write the data into the .csv file.
+        CsvWriter csvWriter = new CsvWriter(tmpPath);
+        String [] tmpRecord = new String[3];
         for(int i = 0; i < ptNum; i ++) {
             Object value = dataGenerator.next();
             for(int j = 0; j < deviceNum; j ++) {
                 for (int k = 0; k < sensorNum; k++) {
-                    TSRecord record = new TSRecord((long) ((i + 1) * sensorNum + k), DEVICE_PREFIX + j);
-                    DataPoint point = null;
-                    switch (dataType) {
-                        case DOUBLE:
-                            point = new DoubleDataPoint(SENSOR_PREFIX + k, (double) value);
-                            break;
-                        case FLOAT:
-                            point = new FloatDataPoint(SENSOR_PREFIX + k, (float) value);
-                            break;
-                        case INT32:
-                            point = new IntDataPoint(SENSOR_PREFIX + k, (int) value);
-                            break;
-                        case INT64:
-                            point = new LongDataPoint(SENSOR_PREFIX + k, (long) value);
-                    }
-                    record.addTuple(point);
-                    writer.write(record);
+                	tmpRecord[0] = String.valueOf((i + 1) * sensorNum + k);
+                	tmpRecord[1] = DEVICE_PREFIX + String.valueOf(j);
+                	switch (dataType) {
+	                    case DOUBLE:
+	                        tmpRecord[2] = "DOUBLE";
+	                        break;
+	                    case FLOAT:
+	                        tmpRecord[2] = "FLOAT";
+	                        break;
+	                    case INT32:
+	                        tmpRecord[2] = "INT32";
+	                        break;
+	                    case INT64:
+	                        tmpRecord[2] = "INT64";
+	                }
+	                tmpRecord[2] += "#" + SENSOR_PREFIX + String.valueOf(k) + "#" + String.valueOf(value);
+	                csvWriter.writeRecord(tmpRecord);
                 }
             }
             if ((i + 1) % (ptNum / 100) == 0) {
                 // System.out.println(String.format("Progress: %d%%", (i + 1)*100 / ptNum));
             }
         }
+        csvWriter.close();
+        csvWriter = null;
+        // Read the data from the .csv file and write it into the .ts file.
+        CsvReader csvReader = new CsvReader(tmpPath);
+        csvReader.setSafetySwitch(false);
+        while (csvReader.readRecord()) {
+        	tmpRecord = csvReader.getValues();
+        	TSRecord record = new TSRecord(Long.parseLong(tmpRecord[0]), tmpRecord[1]);
+            DataPoint point = null;
+            String [] tmpPointList = tmpRecord[2].split("#");
+        	switch (tmpPointList[0]) {
+	        	case "DOUBLE":
+	        		point = new DoubleDataPoint(tmpPointList[1], Double.parseDouble(tmpPointList[2]));
+	                break;
+	            case "FLOAT":
+	                point = new FloatDataPoint(tmpPointList[1], Float.parseFloat(tmpPointList[2]));
+	                break;
+	            case "INT32":
+	                point = new IntDataPoint(tmpPointList[1], Integer.parseInt(tmpPointList[2]));
+	                break;
+	            case "INT64":
+	            	point = new LongDataPoint(tmpPointList[1], Long.parseLong(tmpPointList[2]));
+        	}
+        	record.addTuple(point);
+        	writer.write(record);
+        }
+        csvReader.close();
+        csvReader = null;
         writer.close();
         writer = null;
         monitorThread.interrupt();

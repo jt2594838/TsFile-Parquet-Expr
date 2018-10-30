@@ -44,6 +44,7 @@ public class Constants {
     public static String DEVICE_PREFIX = "d";
 
     public static String filePath = "expr2.ts";
+    public static String tmpPath = "tmp.csv";
     public static int sensorNum = 10;
     public static int deviceNum = 1000;
     public static long ptNum = 20000;
