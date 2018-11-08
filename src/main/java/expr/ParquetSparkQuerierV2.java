@@ -5,9 +5,8 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import static cons.Constants.*;
-import static cons.Constants.selectNum;
 
-public class ParquetQuerierV2 {
+public class ParquetSparkQuerierV2 {
     private long timeConsumption;
 
     public void query() {
@@ -40,6 +39,7 @@ public class ParquetQuerierV2 {
 
         long startTime = System.currentTimeMillis();
         Dataset<Row> dataset = spark.sql(sparkSql);
+       // dataset.show(1000);
         System.out.println(dataset.count());
 //        for (Row row : dataset.collectAsList()) {
 //            System.out.println(row.toString());
@@ -50,7 +50,7 @@ public class ParquetQuerierV2 {
     private static void run() {
         long totContumption = 0;
         for (int i = 0; i < repetition; i++) {
-            ParquetQuerierV2 test = new ParquetQuerierV2();
+            ParquetSparkQuerierV2 test = new ParquetSparkQuerierV2();
             test.query();
             totContumption += test.timeConsumption;
         }
@@ -58,9 +58,11 @@ public class ParquetQuerierV2 {
     }
 
     public static void main(String[] args) {
-        filePath = "expr2.parquetv2";
-        useFilter = false;
-        selectNum = 1;
+        filePath = "expr2-2.parquet";
+        useFilter = true;
+        ptNum = 1000;
+        selectNum = 5;
+        selectRate = 0.1;
         run();
     }
 }

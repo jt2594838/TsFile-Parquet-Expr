@@ -42,6 +42,7 @@ public class TsFileSparkQuerier {
         long startTime = System.currentTimeMillis();
         Dataset<Row> dataset = spark.sql(sparkSql);
         System.out.println(dataset.count());
+        //dataset.show();
         timeConsumption = System.currentTimeMillis() - startTime;
     }
 
@@ -56,9 +57,11 @@ public class TsFileSparkQuerier {
     }
 
     public static void main(String[] args) {
-        filePath = "expr2.ts";
+        filePath = "expr2-2.ts";
         useFilter = true;
+        ptNum = 1000;
         selectNum = 5;
+        selectRate = 0.1;
         run();
     }
 }

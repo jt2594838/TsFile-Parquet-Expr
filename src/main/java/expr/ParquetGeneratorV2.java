@@ -59,12 +59,12 @@ public class ParquetGeneratorV2 {
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
 
         for (int k = 0; k < ptNum; k++) {
-            Object value = dataGenerator.next();
             for (int i = 0; i < deviceNum; i++) {
                 Group group = simpleGroupFactory.newGroup();
                 group.add("time", (long) k + 1);
                 group.add("device", DEVICE_PREFIX + i);
                 for (int j = 0; j < sensorNum; j++) {
+                    Object value = dataGenerator.next();
                     switch (dataType) {
                         case FLOAT:
                             group.add(SENSOR_PREFIX + j, (float) value);
@@ -155,13 +155,13 @@ public class ParquetGeneratorV2 {
     }
 
     public static void main(String[] args) throws IOException {
-        filePath = "expr2.parquetv2";
+        filePath = "expr2-2.parquet";
         align = true;
-        deviceNum = 500;
-        sensorNum = 10;
+        deviceNum = 100;
+        sensorNum = 100;
         repetition = 1;
         keepFile = true;
-        for (int pNum : new int[]{10000}) {
+        for (int pNum : new int[]{1000}) {
             ptNum = pNum;
             run();
         }

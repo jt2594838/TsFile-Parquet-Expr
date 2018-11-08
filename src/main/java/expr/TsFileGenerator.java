@@ -79,9 +79,9 @@ public class TsFileGenerator {
         initWriter();
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
         for(int i = 0; i < ptNum; i ++) {
-            Object value = dataGenerator.next();
             for(int j = 0; j < deviceNum; j ++) {
                 for (int k = 0; k < sensorNum; k++) {
+                    Object value = dataGenerator.next();
                     TSRecord record = new TSRecord((long) ((i + 1) * sensorNum + k), DEVICE_PREFIX + j);
                     DataPoint point = null;
                     switch (dataType) {
@@ -138,13 +138,13 @@ public class TsFileGenerator {
     }
 
     public static void main(String[] args) throws IOException, WriteProcessException {
-        filePath = "expr2.ts";
+        filePath = "expr2-2.ts";
         align = true;
-        deviceNum = 500;
-        sensorNum = 10;
+        deviceNum = 100;
+        sensorNum = 100;
         repetition = 1;
         keepFile = true;
-        for (int pNum : new int[]{10000}) {
+        for (int pNum : new int[]{1000}) {
             ptNum = pNum;
             run();
         }

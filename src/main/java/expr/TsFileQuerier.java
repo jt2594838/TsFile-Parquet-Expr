@@ -48,12 +48,15 @@ public class TsFileQuerier {
             expression.setQueryFilter(queryFilter);
         }
 
-        long startTime = System.nanoTime();
+        long startTime = System.currentTimeMillis();
         QueryDataSet dataSet = router.execute(expression);
+        int cnt = 0;
         while (dataSet.hasNext()) {
-            dataSet.next().getTimestamp();
+            dataSet.next();
+            cnt++;
         }
-        timeConsumption = System.nanoTime() - startTime;
+        System.out.println(cnt);
+        timeConsumption = System.currentTimeMillis() - startTime;
     }
 
     private static void run() throws IOException {
@@ -63,13 +66,16 @@ public class TsFileQuerier {
             test.testQuery();
             totContumption += test.timeConsumption;
         }
-        System.out.println(String.format("Time consumption: %dns", totContumption / repetition));
+        System.out.println(String.format("Time consumption: %dms", totContumption / repetition));
     }
 
     public static void main(String[] args) throws IOException {
         filePath = "expr2.ts";
         useFilter = false;
-        selectNum = 1;
+        ptNum = 10000;
+        selectNum = 5;
+        selectRate = 0.1;
+        repetition = 1;
         run();
     }
 }

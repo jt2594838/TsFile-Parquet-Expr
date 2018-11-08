@@ -23,7 +23,7 @@ public class Constants {
     public static int intOffset = 0;
     public static long longRange = 10000;
     public static long longOffset = 0;
-    public static float floatRange = 100.0f;
+    public static float floatRange = 10000.0f;
     public static float floatOffset = 0.0f;
     public static double doubleRange = 100.0;
     public static double doubleOffset = 0;
@@ -50,7 +50,7 @@ public class Constants {
 
     // query
     public static String SEPARATOR = ".";
-    public static String SESSION_NAME = "ParquetQuerier";
+    public static String SESSION_NAME = "ParquetSparkQuerier";
     public static boolean useFilter = true;
     public static int selectNum = 1;
     public static double selectRate = 0.1;
