@@ -1,4 +1,4 @@
-package expr;
+package expr.consDevice;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -58,7 +58,7 @@ public class ParquetSparkQuerierV2 {
     }
 
     public static void main(String[] args) {
-        filePath = "expr2-2.parquet";
+        filePath = "exper2sp_cd.parquet";
         useFilter = true;
         ptNum = 1000;
         selectNum = 5;

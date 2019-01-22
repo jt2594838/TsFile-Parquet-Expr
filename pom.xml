@@ -24,7 +24,9 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>expr.ParquetGenerator</mainClass>
+                            <!--<mainClass>expr.noDevice.ParquetGenerator</mainClass>-->
+                            <!--<mainClass>expr.noDevice.ORCGenerator</mainClass>-->
+                            <mainClass>expr.TsFileGenerator</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -41,6 +43,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <!--(end) for package jar with dependencies -->
         </plugins>
     </build>
@@ -73,6 +76,12 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
             <version>2.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.orc</groupId>
+            <artifactId>orc-core</artifactId>
+            <version>1.5.4</version>
         </dependency>
 
     </dependencies>

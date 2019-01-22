@@ -37,13 +37,17 @@ public class Constants {
     public static int phase = 0;
     public static int halfPeriod = 1000;
 
+    public static float nullRate = 0;
+
     public static int repetition = 1;
     public static boolean keepFile = true;
 
     public static String SENSOR_PREFIX = "s";
     public static String DEVICE_PREFIX = "d";
 
-    public static String filePath = "expr2.ts";
+    public static String filePath = "";
+    public static String expReportFilePath = "";
+
     public static int sensorNum = 10;
     public static int deviceNum = 1000;
     public static long ptNum = 20000;
@@ -62,5 +66,9 @@ public class Constants {
         tsFileConfig.compressor = "SNAPPY";
         tsFileConfig.pageSizeInByte = 1 * 1024 * 1024;
         tsFileConfig.groupSizeInByte = 1 * 128 * 1024 * 1024;
+    }
+
+    public boolean isNull(float rate){
+        return Math.random()  < rate;
     }
 }

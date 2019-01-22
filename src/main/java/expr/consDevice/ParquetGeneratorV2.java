@@ -1,8 +1,10 @@
-package expr;
+package expr.consDevice;
 
 import datagen.DataGenerator;
 import datagen.GeneratorFactory;
+import expr.MonitorThread;
 import org.apache.hadoop.fs.Path;
+
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
@@ -155,7 +157,7 @@ public class ParquetGeneratorV2 {
     }
 
     public static void main(String[] args) throws IOException {
-        filePath = "expr2-2.parquet";
+        filePath = "expr2_cd.parquet";
         align = true;
         deviceNum = 100;
         sensorNum = 100;
