@@ -211,13 +211,13 @@ public class ORCGenerator {
      */
     public static void main(String args[]) throws IOException {
 
-        int _lab = Integer.parseInt(args[0]),
-                _x = Integer.parseInt(args[1]) ,
-                _ptNum = Integer.parseInt(args[4]);
-        boolean _hasNull = Boolean.parseBoolean(args[2]);
-        float _rate = Float.parseFloat(args[3]);
+        int lab_in = Integer.parseInt(args[0]),
+                deviceNum_in = Integer.parseInt(args[1]) ,
+                ptNum_in = Integer.parseInt(args[4]);
+        boolean hasNull_in = Boolean.parseBoolean(args[2]);
+        float nullRate_in = Float.parseFloat(args[3]);
 
-        ptNum = _ptNum;
+        ptNum = ptNum_in;
 
 
         expReportFilePath = "report\\orc_rpt";
@@ -225,7 +225,7 @@ public class ORCGenerator {
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);
-        exper(_lab, _x, _hasNull, _rate);
+        exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
 //
 //
 //        // lab1, x = 20
