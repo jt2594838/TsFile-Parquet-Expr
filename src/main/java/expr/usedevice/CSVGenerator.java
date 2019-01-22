@@ -1,4 +1,4 @@
-package expr.consDevice;
+package expr.usedevice;
 
 import cn.edu.tsinghua.tsfile.file.metadata.enums.TSDataType;
 import datagen.DataGenerator;

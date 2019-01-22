@@ -1,10 +1,10 @@
-
-package expr.consDevice;
+package expr.usedevice;
 
 import datagen.DataGenerator;
 import datagen.GeneratorFactory;
 import expr.MonitorThread;
 import org.apache.hadoop.fs.Path;
+
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
@@ -21,7 +21,7 @@ import java.io.IOException;
 
 import static cons.Constants.*;
 
-public class ParquetGenerator {
+public class ParquetGeneratorV2 {
 
     private ParquetWriter writer;
     private MessageType schema;
@@ -29,20 +29,18 @@ public class ParquetGenerator {
     private MonitorThread monitorThread;
     private long timeConsumption;
 
-    public ParquetGenerator() throws IOException {
+    public ParquetGeneratorV2() throws IOException {
 
     }
 
     private void init() throws IOException {
         Types.MessageTypeBuilder builder = Types.buildMessage();
         builder.addField(new PrimitiveType(Type.Repetition.REQUIRED, PrimitiveType.PrimitiveTypeName.INT64, "time"));
-        for (int i = 0; i < deviceNum; i++) {
-            Types.GroupBuilder groupBuilder = Types.buildGroup(Type.Repetition.OPTIONAL);
-            for (int j = 0; j < sensorNum; j++) {
-                groupBuilder.addField(new PrimitiveType(Type.Repetition.OPTIONAL, typeName,SENSOR_PREFIX + j));
-            }
-            builder.addField((Type) groupBuilder.named(DEVICE_PREFIX + i));
+        builder.addField(new PrimitiveType(Type.Repetition.REQUIRED, PrimitiveType.PrimitiveTypeName.BINARY, "device"));
+        for (int j = 0; j < sensorNum; j++) {
+            builder.addField(new PrimitiveType(Type.Repetition.OPTIONAL, typeName,SENSOR_PREFIX + j));
         }
+
         schema = builder.named(schemaName);
 
         GroupWriteSupport.setSchema(schema, configuration);
@@ -63,30 +61,30 @@ public class ParquetGenerator {
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
 
         for (int k = 0; k < ptNum; k++) {
-            Object value = dataGenerator.next();
-            Group group = simpleGroupFactory.newGroup();
-            group.add("time", (long) k + 1);
             for (int i = 0; i < deviceNum; i++) {
-                group.addGroup(DEVICE_PREFIX + i);
+                Group group = simpleGroupFactory.newGroup();
+                group.add("time", (long) k + 1);
+                group.add("device", DEVICE_PREFIX + i);
                 for (int j = 0; j < sensorNum; j++) {
+                    Object value = dataGenerator.next();
                     switch (dataType) {
                         case FLOAT:
-                            group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (float) value);
+                            group.add(SENSOR_PREFIX + j, (float) value);
                             break;
                         case DOUBLE:
-                            group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (double) value);
+                            group.add(SENSOR_PREFIX + j, (double) value);
                             break;
                         case INT32:
-                            group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (int) value);
+                            group.add(SENSOR_PREFIX + j, (int) value);
                             break;
                         case INT64:
-                            group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (long) value);
+                            group.add(SENSOR_PREFIX + j, (long) value);
                             break;
                     }
-
                 }
+                writer.write(group);
             }
-            writer.write(group);
+
         }
         writer.close();
         monitorThread.interrupt();
@@ -111,7 +109,6 @@ public class ParquetGenerator {
                     switch (dataType) {
                         case FLOAT:
                             group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (float) value);
-                            group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (float) value);
                             break;
                         case DOUBLE:
                             group.getGroup(DEVICE_PREFIX + i, 0).add(SENSOR_PREFIX + j, (double) value);
@@ -135,7 +132,7 @@ public class ParquetGenerator {
     private static void run() throws IOException {
         double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
         for (int i = 0; i < repetition; i ++) {
-            ParquetGenerator parquetGenerator = new ParquetGenerator();
+            ParquetGeneratorV2 parquetGenerator = new ParquetGeneratorV2();
             if (align)
                 parquetGenerator.write();
             else
@@ -160,16 +157,15 @@ public class ParquetGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        filePath = "expr2.parquet";
+        filePath = "expr2_cd.parquet";
         align = true;
-        deviceNum = 500;
-        sensorNum = 10;
+        deviceNum = 100;
+        sensorNum = 100;
         repetition = 1;
         keepFile = true;
-        for (int pNum : new int[]{10000}) {
+        for (int pNum : new int[]{1000}) {
             ptNum = pNum;
             run();
         }
     }
-
 }

@@ -24,9 +24,9 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <!--<mainClass>expr.noDevice.ParquetGenerator</mainClass>-->
-                            <!--<mainClass>expr.noDevice.ORCGenerator</mainClass>-->
-                            <mainClass>expr.TsFileGenerator</mainClass>
+                            <!--<mainClass>expr.nodevice.ParquetGenerator</mainClass>-->
+                            <mainClass>expr.nodevice.ORCGenerator</mainClass>
+                            <!--<mainClass>expr.TsFileGenerator</mainClass>-->
                         </manifest>
                     </archive>
                     <descriptorRefs>

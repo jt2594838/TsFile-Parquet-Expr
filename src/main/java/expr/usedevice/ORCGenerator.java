@@ -1,4 +1,4 @@
-package expr.consDevice;
+package expr.usedevice;
 
 
 import datagen.DataGenerator;

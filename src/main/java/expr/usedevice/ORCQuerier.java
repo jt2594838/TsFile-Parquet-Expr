@@ -1,4 +1,4 @@
-package expr.consDevice;
+package expr.usedevice;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.orc.OrcFile;

@@ -1,23 +1,60 @@
 package trash;
 
 
-//import org.apache.hadoop.conf.Configuration;
-//import org.apache.hadoop.fs.FileSystem;
-//import org.apache.hadoop.fs.Path;
-//import org.apache.orc.CompressionKind;
-//import org.apache.orc.OrcFile;
-//import org.apache.orc.TypeDescription;
-//import org.apache.orc.Writer;
-//import org.apache.orc.storage.ql.exec.vector.BytesColumnVector;
-//import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
+
+import cn.edu.tsinghua.tsfile.common.utils.ITsRandomAccessFileReader;
+import cn.edu.tsinghua.tsfile.timeseries.read.support.Path;
+import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.MetadataQuerierByFileImpl;
+import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.SeriesChunkLoaderImpl;
+import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryDataSet;
+import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryExpression;
+import cn.edu.tsinghua.tsfile.timeseries.readV2.query.impl.QueryExecutorRouter;
+import hadoop.HDFSInputStream;
+import org.apache.orc.OrcFile;
+import org.apache.orc.Reader;
+import org.apache.orc.RecordReader;
+import org.apache.orc.storage.ql.exec.vector.DoubleColumnVector;
+import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
+import org.apache.orc.storage.ql.exec.vector.TimestampColumnVector;
+import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static cons.Constants.*;
 
 public class Test {
 
     public static void main(String[] args) throws Exception {
-        for(int j = 0; j < 10; j++)
-            for(int i = 0; i < 10000; i++)
-                if(Math.random() >= 1)
-                    System.out.println("---");
+//        Reader reader = OrcFile.createReader(new Path("expFile\\orc\\orc_lab1_x1.orc"),
+//                OrcFile.readerOptions(configuration));
+//        RecordReader rows = reader.rows();
+//        VectorizedRowBatch batch = reader.getSchema().createRowBatch();
+//        while (rows.nextBatch(batch)) {
+//            for(int r=0; r < batch.size; ++r) {
+//                for(int i = 1; i < batch.cols.length; i++)
+//                    System.out.print(((DoubleColumnVector)batch.cols[i]).vector[r] + " ");
+//                System.out.println();
+//            }
+//        }
+//        rows.close();
+
+
+        ITsRandomAccessFileReader reader = new HDFSInputStream("expFile\\ts\\ts_lab1_x20.ts");
+        QueryExecutorRouter router = new QueryExecutorRouter(new MetadataQuerierByFileImpl(reader),
+                new SeriesChunkLoaderImpl(reader));
+        List<Path> selectPaths = new ArrayList<>();
+        for(int i = 0; i < 100; i++){
+            for(int j = 0; i < 20; i++){
+                selectPaths.add(new Path(DEVICE_PREFIX + i + SEPARATOR + SENSOR_PREFIX + j));
+            }
+        }
+        QueryExpression expression = QueryExpression.create();
+        expression.setSelectSeries(selectPaths);
+        QueryDataSet dataSet = router.execute(expression);
+        while(dataSet.hasNext()){
+            System.out.println(dataSet.next().toString());
+        }
 
 
     }

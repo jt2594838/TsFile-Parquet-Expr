@@ -1,4 +1,4 @@
-package expr.noDevice;
+package expr.nodevice;
 
 import datagen.DataGenerator;
 import datagen.GeneratorFactory;
@@ -9,11 +9,9 @@ import org.apache.orc.OrcFile;
 import org.apache.orc.TypeDescription;
 import org.apache.orc.Writer;
 import org.apache.orc.storage.ql.exec.vector.*;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 
 import static cons.Constants.*;
 
@@ -42,7 +40,7 @@ public class ORCGenerator {
      * @return
      */
     private static String genStringSchema() {
-        String s = "struct<time:timestamp";
+        String s = "struct<time:bigint";
         for (int i = 0; i < sensorNum; i++) {
             s += ("," + SENSOR_PREFIX + i + ":" + dataType.toString());
         }
@@ -102,22 +100,24 @@ public class ORCGenerator {
 
         // preparing
         initWriter();
+
+        // TODO debug
+        System.out.println(genStringSchema());
+
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
         VectorizedRowBatch batch = schema.createRowBatch();
-        String[] a = splitStrSchema(genStringSchema());
+//        String[] a = splitStrSchema(genStringSchema());
 
         // generate values
         int row = 0;
         if(hasNull){
             for(int k = 0; k < ptNum; k++){
-                LongColumnVector timeCol = (LongColumnVector) batch.cols[0];
-                timeCol.vector[row] = (k + 1);
+                row = batch.size++;
+                ((LongColumnVector) batch.cols[0]).vector[row] = (k+1);
                 for (int i = 0; i < sensorNum; i++) {
                     if(Math.random()  < nullRate) continue;
-                    DoubleColumnVector s = (DoubleColumnVector) batch.cols[i + 1];
-                    s.vector[row] = (float) dataGenerator.next();
+                    ((DoubleColumnVector) batch.cols[i + 1]).vector[row] = (float) dataGenerator.next();
                 }
-                row = batch.size++;
                 if (batch.size == batch.getMaxSize()) {
                     writer.addRowBatch(batch);
                     batch.reset();
@@ -125,13 +125,11 @@ public class ORCGenerator {
             }
         }else{
             for (int k = 0; k < ptNum; k++) {
-                TimestampColumnVector timeCol = (TimestampColumnVector) batch.cols[0];
-                timeCol.time[row] = (k + 1);
-                for (int i = 0; i < sensorNum; i++) {
-                    DoubleColumnVector s = (DoubleColumnVector) batch.cols[i + 1];
-                    s.vector[row] = (float) dataGenerator.next();
-                }
                 row = batch.size++; // update row index
+                ((LongColumnVector) batch.cols[0]).vector[row] = k+1;
+                for (int i = 0; i < sensorNum; i++) {
+                    ((DoubleColumnVector) batch.cols[i + 1]).vector[row] = (float) dataGenerator.next();
+                }
                 if (batch.size == batch.getMaxSize()) {
                     writer.addRowBatch(batch);
                     batch.reset();
@@ -219,52 +217,12 @@ public class ORCGenerator {
 
         ptNum = ptNum_in;
 
-
-        expReportFilePath = "report\\orc_rpt";
+        expReportFilePath = ".\\report\\orc_rpt";
         new File("report").mkdir();
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);
         exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
-//
-//
-//        // lab1, x = 20
-//        exper(1, 20, false, 0);
-//
-//        // lab1, x = 40
-//        exper(1, 40, false, 0);
-//
-//
-//        // lab1, x = 60
-//        exper(1, 60, false, 0);
-//
-//
-//        // lab1, x = 80
-//        exper(1, 80, false, 0);
-//
-//
-//        // lab1, x = 100
-//        exper(1, 100, false, 0);
-//
-//
-//        // lab2, x = 100, rate = 0
-//        exper(2, 100, true, (float) 0);
-//
-//
-//        // lab2, x = 100, rate = 0.2
-//        exper(2, 100, true, (float) 0.2);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float) 0.4);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float)0.6);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float)0.8);
 
         reportWriter.close();
 

@@ -1,4 +1,4 @@
-package expr.noDevice;
+package expr.nodevice;
 
 import datagen.DataGenerator;
 import datagen.GeneratorFactory;
