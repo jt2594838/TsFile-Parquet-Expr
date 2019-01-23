@@ -67,18 +67,21 @@ public class ParquetGenerator {
             for(int k = 0; k < ptNum; k++){
                 Group group = simpleGroupFactory.newGroup();
                 group.add("time", (long) k + 1);
-                for(int i = 0; i < sensorNum; i++)
+                realAllPnt++;
+                for(int i = 0; i < sensorNum; i++){
+                    if(Math.random()<nullRate) continue;
                     group.add(SENSOR_PREFIX + i, (float) dataGenerator.next());
+                    realAllPnt++;
+                }
                 writer.write(group);
             }
         }else{
             for(int k = 0; k < ptNum; k++){
-//                System.out.println(k);
                 Group group = simpleGroupFactory.newGroup();
                 group.add("time", (long) k + 1);
-                for(int i = 0; i < sensorNum; i++){
-                    if(Math.random()<nullRate) continue;
+                for(int i = 0; i < sensorNum; i++) {
                     group.add(SENSOR_PREFIX + i, (float) dataGenerator.next());
+                    realAllPnt++;
                 }
                 writer.write(group);
             }
@@ -90,6 +93,7 @@ public class ParquetGenerator {
 
     private static void run(boolean hasNull) throws IOException {
         double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
+        realAllPnt = 0;
         for (int i = 0; i < repetition; i ++) {
             ParquetGenerator parquetGenerator = new ParquetGenerator();
             if (align)
@@ -123,11 +127,11 @@ public class ParquetGenerator {
 
     public static void exper(int lab, int x, boolean hasNull, float rate) throws IOException {
         nullRate = rate;
-        String exInfo = "parquet_lab" + lab + "_x" + x;
+        String exInfo = "parquet_lab" + lab + "_x" + x + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
         filePath = "expFile\\parquet\\" + exInfo + ".parquet";
-        ptNum = 100000;
+//        ptNum = 100000;
         align = true;
         deviceNum = 100;
         sensorNum = x * deviceNum; // it includes all the sensors in the system
@@ -151,54 +155,11 @@ public class ParquetGenerator {
         float nullRate_in = Float.parseFloat(args[3]);
         ptNum = ptNum_in;
 
-        expReportFilePath = "report\\parque_rpt";
-        new File("report").mkdir();
+        expReportFilePath = "parque_rpt";
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);
         exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
-
-
-
-
-//
-//        // lab1, x = 20
-//        exper(1, 20, false, 0);
-//
-//        // lab1, x = 40
-//        exper(1, 40, false, 0);
-//
-//
-//        // lab1, x = 60
-//        exper(1, 60, false, 0);
-//
-//
-//        // lab1, x = 80
-//        exper(1, 80, false, 0);
-//
-//
-//        // lab1, x = 100
-//        exper(1, 100, false, 0);
-//
-//
-//        // lab2, x = 100, rate = 0
-//        exper(2, 100, true, (float) 0);
-//
-//
-//        // lab2, x = 100, rate = 0.2
-//        exper(2, 100, true, (float) 0.2);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float) 0.4);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float)0.6);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float)0.8);
 
         reportWriter.close();
     }

@@ -46,9 +46,11 @@ public class TsFileGenerator {
             for(int i = 0; i < ptNum; i ++) {
                 for(int j = 0; j < deviceNum; j ++) {
                     TSRecord record = new TSRecord(i + 1, DEVICE_PREFIX + j);
+                    realAllPnt++;
                     for (int k = 0; k < sensorNum; k++) {
                         if (Math.random() < nullRate) continue;
                         record.addTuple(new FloatDataPoint(SENSOR_PREFIX + k, (float) dataGenerator.next()));
+                        realAllPnt++;
                     }
                     writer.write(record);
                 }
@@ -58,8 +60,11 @@ public class TsFileGenerator {
             for(int i = 0; i < ptNum; i ++) {
                 for(int j = 0; j < deviceNum; j ++) {
                     TSRecord record = new TSRecord(i + 1, DEVICE_PREFIX + j);
-                    for (int k = 0; k < sensorNum; k++)
+                    realAllPnt++;
+                    for (int k = 0; k < sensorNum; k++) {
                         record.addTuple(new FloatDataPoint(SENSOR_PREFIX + k, (float) dataGenerator.next()));
+                        realAllPnt++;
+                    }
                     writer.write(record);
                 }
             }
@@ -73,13 +78,14 @@ public class TsFileGenerator {
 
     private static void run(boolean hasNull) throws IOException, WriteProcessException {
         double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
+        realAllPnt = 0;
         for (int i = 0; i < repetition; i ++) {
             TsFileGenerator generator = new TsFileGenerator();
             if (align)
                 generator.gen(hasNull);
 //            else
 //                generator.genNonalign();
-            double avgSpd = (sensorNum * deviceNum * ptNum) / (generator.timeConsumption / 1000.0);
+            double avgSpd = (realAllPnt) / (generator.timeConsumption / 1000.0);
             double memUsage = generator.monitorThread.getMaxMemUsage() / (1024.0 * 1024.0);
             totAvgSpd += avgSpd;
             totMemUsage += memUsage;
@@ -107,11 +113,11 @@ public class TsFileGenerator {
 
     public static void exper(int lab, int x, boolean hasNull, float rate) throws IOException {
         nullRate = rate;
-        String exInfo = "ts_lab" + lab + "_x" + x;
+        String exInfo = "ts_lab" + lab + "_x" + x + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
         filePath = "expFile\\ts\\" + exInfo + ".ts";
-        ptNum = 100000;
+//        ptNum = 100000;
         align = true;
         deviceNum = 100;
         sensorNum = x; // it includes all the sensors in the system
@@ -136,52 +142,11 @@ public class TsFileGenerator {
 
         ptNum = ptNum_in;
 
-        expReportFilePath = "report\\tsfile_rpt";
-        new File("report").mkdir();
+        expReportFilePath = "tsfile_rpt";
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);
         exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
-
-//
-//        // lab1, x = 20
-//        exper(1, 20, false, 0);
-//
-//        // lab1, x = 40
-//        exper(1, 40, false, 0);
-//
-//
-//        // lab1, x = 60
-//        exper(1, 60, false, 0);
-//
-//
-//        // lab1, x = 80
-//        exper(1, 80, false, 0);
-//
-//
-//        // lab1, x = 100
-//        exper(1, 100, false, 0);
-//
-//
-//        // lab2, x = 100, rate = 0
-//        exper(2, 100, true, (float) 0);
-//
-//
-//        // lab2, x = 100, rate = 0.2
-//        exper(2, 100, true, (float) 0.2);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float) 0.4);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float)0.6);
-//
-//
-//        // lab2, x = 100
-//        exper(2, 100, true, (float)0.8);
-
         reportWriter.close();
     }
 }

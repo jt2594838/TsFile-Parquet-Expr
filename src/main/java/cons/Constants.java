@@ -37,6 +37,8 @@ public class Constants {
     public static int phase = 0;
     public static int halfPeriod = 1000;
 
+    public static long realAllPnt;
+
     public static float nullRate = 0;
 
     public static int repetition = 1;

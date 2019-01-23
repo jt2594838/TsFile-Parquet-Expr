@@ -100,10 +100,6 @@ public class ORCGenerator {
 
         // preparing
         initWriter();
-
-        // TODO debug
-        System.out.println(genStringSchema());
-
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
         VectorizedRowBatch batch = schema.createRowBatch();
 //        String[] a = splitStrSchema(genStringSchema());
@@ -114,9 +110,11 @@ public class ORCGenerator {
             for(int k = 0; k < ptNum; k++){
                 row = batch.size++;
                 ((LongColumnVector) batch.cols[0]).vector[row] = (k+1);
+                realAllPnt++;
                 for (int i = 0; i < sensorNum; i++) {
                     if(Math.random()  < nullRate) continue;
                     ((DoubleColumnVector) batch.cols[i + 1]).vector[row] = (float) dataGenerator.next();
+                    realAllPnt++;
                 }
                 if (batch.size == batch.getMaxSize()) {
                     writer.addRowBatch(batch);
@@ -127,8 +125,10 @@ public class ORCGenerator {
             for (int k = 0; k < ptNum; k++) {
                 row = batch.size++; // update row index
                 ((LongColumnVector) batch.cols[0]).vector[row] = k+1;
+                realAllPnt++;
                 for (int i = 0; i < sensorNum; i++) {
                     ((DoubleColumnVector) batch.cols[i + 1]).vector[row] = (float) dataGenerator.next();
+                    realAllPnt++;
                 }
                 if (batch.size == batch.getMaxSize()) {
                     writer.addRowBatch(batch);
@@ -148,6 +148,7 @@ public class ORCGenerator {
 
     public static void run(boolean hasNull) throws IOException {
         double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
+        realAllPnt = 0;
         for (int i = 0; i < repetition; i++) {
             ORCGenerator orcGenerator = new ORCGenerator();
             if (align)
@@ -155,7 +156,7 @@ public class ORCGenerator {
 //            else
 //                orcGenerator.genNonalign();
 //            double avgSpd = (sensorNum * deviceNum * ptNum) / (orcGenerator.timeConsumption / 1000.0);
-            double avgSpd = (sensorNum * ptNum) / (orcGenerator.timeConsumption / 1000.0);
+            double avgSpd = (realAllPnt) / (orcGenerator.timeConsumption / 1000.0);
             double memUsage = orcGenerator.monitorThread.getMaxMemUsage() / (1024.0 * 1024.0);
             totAvgSpd += avgSpd;
             totMemUsage += memUsage;
@@ -182,7 +183,7 @@ public class ORCGenerator {
 
     public static void exper(int lab, int x, boolean hasNull, float rate) throws IOException {
         nullRate = rate;
-        String exInfo = "orc_lab" + lab + "_x" + x;
+        String exInfo = "orc_lab" + lab + "_x" + x + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
         filePath = "expFile\\orc\\" + exInfo + ".orc";
@@ -217,8 +218,8 @@ public class ORCGenerator {
 
         ptNum = ptNum_in;
 
-        expReportFilePath = ".\\report\\orc_rpt";
-        new File("report").mkdir();
+        expReportFilePath = "orc_rpt";
+//        new File("report").mkdir();
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);
