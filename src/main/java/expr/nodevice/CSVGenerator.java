@@ -36,6 +36,7 @@ public class CSVGenerator {
         init();
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
 
+
         if(hasNull){
             for (int k = 0; k < ptNum; k++) {
                     StringBuilder record = new StringBuilder(String.valueOf(k + 1));

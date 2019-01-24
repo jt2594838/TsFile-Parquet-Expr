@@ -10,13 +10,15 @@ import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryDataSet;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryExpression;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.query.impl.QueryExecutorRouter;
 import hadoop.HDFSInputStream;
-import org.apache.orc.OrcFile;
-import org.apache.orc.Reader;
-import org.apache.orc.RecordReader;
-import org.apache.orc.storage.ql.exec.vector.DoubleColumnVector;
-import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
-import org.apache.orc.storage.ql.exec.vector.TimestampColumnVector;
-import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
+////import org.apache.hadoop.fs.Path;
+//import org.apache.orc.OrcFile;
+//import org.apache.orc.Reader;
+//import org.apache.orc.RecordReader;
+//import org.apache.orc.storage.ql.exec.vector.DoubleColumnVector;
+//import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
+//import org.apache.orc.storage.ql.exec.vector.TimestampColumnVector;
+//import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
+//import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,12 +28,13 @@ import static cons.Constants.*;
 public class Test {
 
     public static void main(String[] args) throws Exception {
-//        Reader reader = OrcFile.createReader(new Path("expFile\\orc\\orc_lab1_x1.orc"),
+//        Reader reader =  OrcFile.createReader(new Path("data.orc"),
 //                OrcFile.readerOptions(configuration));
 //        RecordReader rows = reader.rows();
 //        VectorizedRowBatch batch = reader.getSchema().createRowBatch();
 //        while (rows.nextBatch(batch)) {
 //            for(int r=0; r < batch.size; ++r) {
+//                System.out.println(((LongColumnVector)batch.cols[0]).vector[r] + " ");
 //                for(int i = 1; i < batch.cols.length; i++)
 //                    System.out.print(((DoubleColumnVector)batch.cols[i]).vector[r] + " ");
 //                System.out.println();
@@ -40,12 +43,12 @@ public class Test {
 //        rows.close();
 
 
-        ITsRandomAccessFileReader reader = new HDFSInputStream("expFile\\ts\\ts_lab1_x20.ts");
+        ITsRandomAccessFileReader reader = new HDFSInputStream("p10_d5_s2_r0.ts");
         QueryExecutorRouter router = new QueryExecutorRouter(new MetadataQuerierByFileImpl(reader),
                 new SeriesChunkLoaderImpl(reader));
         List<Path> selectPaths = new ArrayList<>();
-        for(int i = 0; i < 100; i++){
-            for(int j = 0; i < 20; i++){
+        for(int i = 0; i < 5; i++){
+            for(int j = 0; j < 2; j++){
                 selectPaths.add(new Path(DEVICE_PREFIX + i + SEPARATOR + SENSOR_PREFIX + j));
             }
         }

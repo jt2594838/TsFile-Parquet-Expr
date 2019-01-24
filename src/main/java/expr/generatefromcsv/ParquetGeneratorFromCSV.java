@@ -1,7 +1,6 @@
-package expr.nodevice;
+package expr.generatefromcsv;
 
-import datagen.DataGenerator;
-import datagen.GeneratorFactory;
+import com.csvreader.CsvReader;
 import expr.MonitorThread;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.ParquetProperties;
@@ -20,23 +19,21 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import static cons.Constants.*;
-import static cons.Constants.SENSOR_PREFIX;
+import static cons.Constants.expReportFilePath;
 
-/**
- * In this experiment, the table is designed as (time, s1, s2, ..., sn)
- * Ignoring the conception of a device
- */
-public class ParquetGenerator {
+public class ParquetGeneratorFromCSV {
     private ParquetWriter writer;
     private MessageType schema;
-    private DataGenerator dataGenerator;
     private MonitorThread monitorThread;
     private long timeConsumption;
     private static FileWriter reportWriter;
 
-    public ParquetGenerator(){}
+    static CsvReader reader;
+
+    public ParquetGeneratorFromCSV(){}
 
     private void init() throws IOException {
+
         Types.MessageTypeBuilder builder = Types.buildMessage();
         builder.addField(new PrimitiveType(Type.Repetition.REQUIRED, PrimitiveType.PrimitiveTypeName.INT64, "time"));
         for (int j = 0; j < sensorNum; j++) {
@@ -54,55 +51,43 @@ public class ParquetGenerator {
                 usingEncoing, true, ParquetProperties.WriterVersion.PARQUET_2_0);
     }
 
-    public void gen(boolean hasNull) throws IOException {
+    public void gen() throws IOException {
         monitorThread = new MonitorThread();
         monitorThread.start();
         long startTime = System.currentTimeMillis();
         init();
         SimpleGroupFactory simpleGroupFactory = new SimpleGroupFactory(schema);
-        dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
 
-        // generate values
-        if(hasNull){
-            for(int k = 0; k < ptNum; k++){
-                Group group = simpleGroupFactory.newGroup();
-                group.add("time", (long) k + 1);
+
+        while(reader.readRecord()){
+            String[] line = reader.getValues();
+            Group group = simpleGroupFactory.newGroup();
+            group.add("time", Long.parseLong(line[0]));
+            realAllPnt++;
+            for(int i = 1; i <line.length; i++){
+                if(line[i] == "") continue;
+                group.add(SENSOR_PREFIX + (i-1), Float.parseFloat(line[i]));
                 realAllPnt++;
-                for(int i = 0; i < sensorNum; i++){
-                    if(Math.random()<nullRate) continue;
-                    group.add(SENSOR_PREFIX + i, (float) dataGenerator.next());
-                    realAllPnt++;
-                }
-                writer.write(group);
             }
-        }else{
-            for(int k = 0; k < ptNum; k++){
-                Group group = simpleGroupFactory.newGroup();
-                group.add("time", (long) k + 1);
-                for(int i = 0; i < sensorNum; i++) {
-                    group.add(SENSOR_PREFIX + i, (float) dataGenerator.next());
-                    realAllPnt++;
-                }
-                writer.write(group);
-            }
+            writer.write(group);
         }
+
         writer.close();
         monitorThread.interrupt();
         timeConsumption = System.currentTimeMillis() - startTime;
     }
 
-    private static void run(boolean hasNull) throws IOException {
+    private static void run(String csvPath) throws IOException {
         double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
+        reader = new CsvReader(csvPath);
         realAllPnt = 0;
         for (int i = 0; i < repetition; i ++) {
-            ParquetGenerator parquetGenerator = new ParquetGenerator();
+            ParquetGeneratorFromCSV parquetGeneratorFromCSV = new ParquetGeneratorFromCSV();
             if (align)
-                parquetGenerator.gen(hasNull);
-//            else
-//                parquetGenerator.writeNonalign();
-//            double avgSpd = (sensorNum * deviceNum * ptNum) / (parquetGenerator.timeConsumption / 1000.0);
-            double avgSpd = (realAllPnt) / (parquetGenerator.timeConsumption / 1000.0);
-            double memUsage = parquetGenerator.monitorThread.getMaxMemUsage() / (1024.0 * 1024.0);
+                parquetGeneratorFromCSV.gen();
+
+            double avgSpd = (realAllPnt) / (parquetGeneratorFromCSV.timeConsumption / 1000.0);
+            double memUsage = parquetGeneratorFromCSV.monitorThread.getMaxMemUsage() / (1024.0 * 1024.0);
             totAvgSpd += avgSpd;
             totMemUsage += memUsage;
             System.out.println(String.format("ParquetFile generation completed. avg speed : %fpt/s, max memory usage: %fMB",
@@ -114,31 +99,24 @@ public class ParquetGenerator {
             }
         }
         System.out.println(String.format("FileName: %s; DataType: %s; Encoding: %s", filePath, typeName, usingEncoing));
-        System.out.println(String.format("DeviceNum: %d; SensorNum: %d; PtPerCol: %d; Wave: %s", deviceNum, sensorNum, ptNum, wave));
         System.out.println(String.format("Total Avg speed : %fpt/s; Total max memory usage: %fMB; File size: %fMB",
                 totAvgSpd / repetition, totMemUsage / repetition, totFileSize / repetition));
 
         reportWriter.write(String.format("FileName: %s; DataType: %s; Encoding: %s\n", filePath, typeName, usingEncoing));
-        reportWriter.write(String.format("DeviceNum: %d; SensorNum: %d; PtPerCol: %d; Wave: %s\n", deviceNum, sensorNum, ptNum, wave));
         reportWriter.write(String.format("Total Avg speed : %fpt/s; Total max memory usage: %fMB; File size: %fMB\n",
                 totAvgSpd / repetition, totMemUsage / repetition, totFileSize / repetition));
         reportWriter.write("\n");
     }
 
-    public static void exper(int lab, int x, boolean hasNull, float rate) throws IOException {
-        nullRate = rate;
-        String exInfo = "parquet_lab" + lab + "_x" + x + "_rate" + rate;
+    public static void exper(String csvPath) throws IOException {
+        String exInfo = csvPath.split("[.]")[0] + csvPath.split("[.]")[1];
         reportWriter.write(exInfo + ":\n");
-        System.out.println(exInfo + "begins........");
-        filePath = "expFile\\parquet\\" + exInfo + ".parquet";
-//        ptNum = 100000;
+        filePath = exInfo + ".parquet";
         align = true;
-        deviceNum = 100;
-        sensorNum = x * deviceNum; // it includes all the sensors in the system
         repetition = 1;
         keepFile = true;
         try {
-            run(hasNull);
+            run(csvPath);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -148,43 +126,19 @@ public class ParquetGenerator {
     }
 
     public static void main(String[] args) throws IOException {
-        int lab_in = Integer.parseInt(args[0]),
-                deviceNum_in = Integer.parseInt(args[1]) ,
-                ptNum_in = Integer.parseInt(args[4]);
-        boolean hasNull_in = Boolean.parseBoolean(args[2]);
-        float nullRate_in = Float.parseFloat(args[3]);
-        ptNum = ptNum_in;
-
-        expReportFilePath = "parque_rpt";
+        String csv_path = args[0];
+        expReportFilePath = "pq_rpt";
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);
-        exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
 
+        CsvReader preReader = new CsvReader(csv_path);
+        preReader.readRecord();
+        sensorNum = preReader.getValues().length - 1;
+
+
+        exper(csv_path);
         reportWriter.close();
+
     }
-
 }
-
-
-
-
-/*
-                for(int i = 0; i < sensorNum; i++){
-                    Object value = dataGenerator.next();
-                    switch (dataType) {
-                        case FLOAT:
-                            group.add(SENSOR_PREFIX + i, (float) value);
-                            break;
-                        case DOUBLE:
-                            group.add(SENSOR_PREFIX + i, (double) value);
-                            break;
-                        case INT32:
-                            group.add(SENSOR_PREFIX + i, (int) value);
-                            break;
-                        case INT64:
-                            group.add(SENSOR_PREFIX + i, (long) value);
-                            break;
-                    }
-                }
- */
