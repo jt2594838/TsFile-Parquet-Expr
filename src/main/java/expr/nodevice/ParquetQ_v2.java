@@ -49,7 +49,7 @@ public class ParquetQ_v2 {
         ParquetReader<Group> build=reader.build();
         Group line;
         while((line=build.read())!=null){
-//            System.out.println(line.toString());
+            System.out.println(line.toString());
         }
 
         long time = System.currentTimeMillis() - start;

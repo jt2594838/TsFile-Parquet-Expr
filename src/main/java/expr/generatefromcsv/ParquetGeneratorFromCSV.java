@@ -46,9 +46,12 @@ public class ParquetGeneratorFromCSV {
         GroupWriteSupport groupWriteSupport = new GroupWriteSupport();
         groupWriteSupport.init(configuration);
         new File(filePath).delete();
+        String hello = "hello";
+
         writer = new ParquetWriter(new Path(filePath), groupWriteSupport, CompressionCodecName.SNAPPY,
                 ParquetWriter.DEFAULT_BLOCK_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE,
                 usingEncoing, true, ParquetProperties.WriterVersion.PARQUET_2_0);
+
     }
 
     public void gen() throws IOException {

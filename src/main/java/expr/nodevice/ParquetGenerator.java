@@ -49,6 +49,7 @@ public class ParquetGenerator {
         GroupWriteSupport groupWriteSupport = new GroupWriteSupport();
         groupWriteSupport.init(configuration);
         new File(filePath).delete();
+
         writer = new ParquetWriter(new Path(filePath), groupWriteSupport, CompressionCodecName.SNAPPY,
                 ParquetWriter.DEFAULT_BLOCK_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE,
                 usingEncoing, true, ParquetProperties.WriterVersion.PARQUET_2_0);
@@ -73,6 +74,7 @@ public class ParquetGenerator {
                     group.add(SENSOR_PREFIX + i, (float) dataGenerator.next());
                     realAllPnt++;
                 }
+                System.out.println();
                 writer.write(group);
             }
         }else{
@@ -80,7 +82,9 @@ public class ParquetGenerator {
                 Group group = simpleGroupFactory.newGroup();
                 group.add("time", (long) k + 1);
                 for(int i = 0; i < sensorNum; i++) {
-                    group.add(SENSOR_PREFIX + i, (float) dataGenerator.next());
+                    float v = (float) dataGenerator.next();
+                    group.add(SENSOR_PREFIX + i, v);
+                    System.out.print(v + " ");
                     realAllPnt++;
                 }
                 writer.write(group);
@@ -130,10 +134,10 @@ public class ParquetGenerator {
         String exInfo = "parquet_lab" + lab + "_x" + x + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
-        filePath = "expFile\\parquet\\" + exInfo + ".parquet";
+        filePath = exInfo + ".parquet";
 //        ptNum = 100000;
         align = true;
-        deviceNum = 100;
+        deviceNum = 100; // TODO
         sensorNum = x * deviceNum; // it includes all the sensors in the system
         repetition = 1;
         keepFile = true;

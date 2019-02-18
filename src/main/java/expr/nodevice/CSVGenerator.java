@@ -29,6 +29,20 @@ public class CSVGenerator {
         writer = new BufferedWriter(new FileWriter(filePath));
     }
 
+    private StringBuilder getString(StringBuilder s, int i){
+        for(int n = 0; n < sensorNum; n++){
+            s.append(COMMA);
+            if(n+1 == i) s.append(dataGenerator.next());
+        }
+        return s;
+    }
+
+    private StringBuilder getString(StringBuilder s, int i, int e){
+        for(int n = 1; n <= i-1; n++) s.append(COMMA);
+        for(int n = i; n <= e; n++)s.append(COMMA).append(dataGenerator.next());
+        return s;
+    }
+
     public void gen(boolean hasNull) throws IOException {
         monitorThread = new MonitorThread();
         monitorThread.start();
@@ -36,36 +50,66 @@ public class CSVGenerator {
         init();
         dataGenerator = GeneratorFactory.INSTANCE.getGenerator();
 
+        int counter = 0, line_num = 1;
 
-        if(hasNull){
-            for (int k = 0; k < ptNum; k++) {
-                    StringBuilder record = new StringBuilder(String.valueOf(k + 1));
-                    realAllPnt++;
-                    for (int j = 0; j < sensorNum; j++) {
-                        if(Math.random() < nullRate) {
-                            record.append(COMMA);
-                            continue;
-                        }
-                        record.append(COMMA).append(dataGenerator.next());
-                        realAllPnt++;
-                    }
-                    writer.write(record.toString());
-                    writer.newLine();
+        if(nullRate == (float) 0.5){
+            line_num = 2;
+        }else if(nullRate == (float) 0.67){
+            line_num = 3;
+        }else if(nullRate == (float) 0.75){
+            line_num = 4;
+        }else if(nullRate == (float) 0.8){
+            line_num = 5;
+        }
+        long time = 0;
 
+        while(counter < ptNum){
+
+            int index = 1;
+            for(int i = 0; i < line_num - 1; i++){
+                StringBuilder record = new StringBuilder(String.valueOf(++time));
+                writer.write(getString(record, i+1).toString());
+                writer.newLine();
+//                realAllPnt++;
+//                realAllPnt++;
+                index++;
             }
-        }else{
-            for (int k = 0; k < ptNum; k++) {
-                    StringBuilder record = new StringBuilder(String.valueOf(k + 1));
-                    realAllPnt++;
-                    for (int j = 0; j < sensorNum; j++) {
-                        record.append(COMMA).append(dataGenerator.next());
-                        realAllPnt++;
-                    }
-                    writer.write(record.toString());
-                    writer.newLine();
-            }
+            StringBuilder record = new StringBuilder(String.valueOf(++time));
+            writer.write(getString(record, index, sensorNum).toString());
+            writer.newLine();
+//            realAllPnt+=
+            counter++;
         }
 
+
+//        if(hasNull){
+//            for (int k = 0; k < ptNum; k++) {
+//                    StringBuilder record = new StringBuilder(String.valueOf(k + 1));
+//                    realAllPnt++;
+//                    for (int j = 0; j < sensorNum; j++) {
+//                        if(Math.random() < nullRate) {
+//                            record.append(COMMA);
+//                            continue;
+//                        }
+//                        record.append(COMMA).append(dataGenerator.next());
+//                        realAllPnt++;
+//                    }
+//                    writer.write(record.toString());
+//                    writer.newLine();
+//
+//            }
+//        }else{
+//            for (int k = 0; k < ptNum; k++) {
+//                    StringBuilder record = new StringBuilder(String.valueOf(k + 1));
+//                    realAllPnt++;
+//                    for (int j = 0; j < sensorNum; j++) {
+//                        record.append(COMMA).append(dataGenerator.next());
+//                        realAllPnt++;
+//                    }
+//                    writer.write(record.toString());
+//                    writer.newLine();
+//            }
+//        }
 
         writer.close();
         monitorThread.interrupt();
@@ -73,36 +117,14 @@ public class CSVGenerator {
     }
 
     private static void run(boolean hasNull) throws IOException {
-        double totAvgSpd = 0.0, totMemUsage = 0.0, totFileSize = 0.0;
+        double totFileSize = 0.0;
         realAllPnt = 0;
-
-        for (int i = 0; i < repetition; i ++) {
-            CSVGenerator generator = new CSVGenerator();
-            generator.gen(hasNull);
-
-            double avgSpd = (realAllPnt) / (generator.timeConsumption / 1000.0);
-            double memUsage = generator.monitorThread.getMaxMemUsage() / (1024.0 * 1024.0);
-            totAvgSpd += avgSpd;
-            totMemUsage += memUsage;
-            System.out.println(String.format("ParquetFile generation completed. avg speed : %fpt/s, max memory usage: %fMB",
-                    avgSpd, memUsage));
-            File file = new File(filePath);
-            totFileSize += file.length() / (1024.0 * 1024.0);
-            if (!keepFile) {
-                file.delete();
-            }
-        }
-        System.out.println(String.format("FileName: %s; DataType: %s; Encoding: %s", filePath, typeName, usingEncoing));
-        System.out.println(String.format("DeviceNum: %d; SensorNum: %d; PtPerCol: %d; Wave: %s", deviceNum, sensorNum, ptNum, wave));
-        System.out.println(String.format("Total Avg speed : %fpt/s; Total max memory usage: %fMB; File size: %fMB",
-                totAvgSpd / repetition, totMemUsage / repetition, totFileSize / repetition));
-
-        reportWriter.write(String.format("FileName: %s; DataType: %s; Encoding: %s\n", filePath, typeName, usingEncoing));
-        reportWriter.write(String.format("DeviceNum: %d; SensorNum: %d; PtPerCol: %d; Wave: %s\n", deviceNum, sensorNum, ptNum, wave));
-        reportWriter.write(String.format("Total Avg speed : %fpt/s; Total max memory usage: %fMB; File size: %fMB\n",
-                totAvgSpd / repetition, totMemUsage / repetition, totFileSize / repetition));
+        CSVGenerator generator = new CSVGenerator();
+        generator.gen(hasNull);
+        totFileSize += new File(filePath).length() / (1024.0 * 1024.0);
+        reportWriter.write(String.format("FileName: %s", filePath));
+        reportWriter.write(String.format("File size: %fMB", totFileSize / repetition));
         reportWriter.write("\n");
-
     }
 
 
@@ -116,7 +138,6 @@ public class CSVGenerator {
 //        filePath = "expFile\\csv\\" + exInfo + ".csv";
         filePath = exInfo + ".csv";
         if(!(new File(filePath).exists())) new File(filePath).createNewFile();
-//        ptNum = 100000;
         align = true;
         deviceNum = 100;
         sensorNum = x * deviceNum; // it includes all the sensors in the system
@@ -133,6 +154,11 @@ public class CSVGenerator {
     }
 
 
+    /**
+     *
+     * @param args: lab#, senPerDev#, hasNull, nullRate, ptnum
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
         int lab_in = Integer.parseInt(args[0]),
                 deviceNum_in = Integer.parseInt(args[1]) ,
@@ -149,20 +175,5 @@ public class CSVGenerator {
         exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
 
         reportWriter.close();
-//
-//
-//
-//        filePath = "expr1.csv";
-//        align = true;
-//        dataType = TSDataType.FLOAT;
-//        typeName = PrimitiveType.PrimitiveTypeName.FLOAT;
-//        deviceNum = 50;
-//        sensorNum = 1000;
-//        repetition = 1;
-//        keepFile = true;
-//        for (int pNum : new int[]{10000}) {
-//            ptNum = pNum;
-//            run();
-//        }
     }
 }

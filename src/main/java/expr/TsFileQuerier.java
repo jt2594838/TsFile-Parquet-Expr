@@ -12,6 +12,8 @@ import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryExpression;
 import cn.edu.tsinghua.tsfile.timeseries.readV2.query.impl.QueryExecutorRouter;
 import hadoop.HDFSInputStream;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ public class TsFileQuerier {
 
     private QueryExecutorRouter router;
     private long timeConsumption;
+    private static FileWriter reportWriter;
 
     private void initEngine() throws IOException {
         ITsRandomAccessFileReader reader = new HDFSInputStream(filePath);
@@ -34,7 +37,7 @@ public class TsFileQuerier {
 
         List<Path> selectPaths = new ArrayList<>();
         for (int i = 0; i < selectNum; i++) {
-            selectPaths.add(new Path(DEVICE_PREFIX + i + SEPARATOR + SENSOR_PREFIX + i));
+            selectPaths.add(new Path(DEVICE_PREFIX + i + SEPARATOR + SENSOR_PREFIX + 0));
         }
 
         QueryExpression expression = QueryExpression.create();
@@ -52,6 +55,7 @@ public class TsFileQuerier {
         QueryDataSet dataSet = router.execute(expression);
         int cnt = 0;
         while (dataSet.hasNext()) {
+//            System.out.println(dataSet.next().toString());
             dataSet.next();
             cnt++;
         }
@@ -66,16 +70,29 @@ public class TsFileQuerier {
             test.testQuery();
             totContumption += test.timeConsumption;
         }
-        System.out.println(String.format("Time consumption: %dms", totContumption / repetition));
+        reportWriter.write(String.format("Query exp: \n"));
+        reportWriter.write(String.format(filePath + "\t select rate: " +  selectRate + "\t select cols: " + selectNum + "\n"));
+        reportWriter.write(String.format("Time consumption: %dms \n\n", totContumption / repetition));
+//        System.out.println(String.format("Time consumption: %dms", totContumption / repetition));
     }
 
+    // ts_lab2_x2_rate0.67.ts 0.5 5
     public static void main(String[] args) throws IOException {
-        filePath = "expr2.ts";
-        useFilter = false;
-        ptNum = 10000;
-        selectNum = 5;
-        selectRate = 0.1;
+        filePath = args[0];
+        useFilter = true;
+        ptNum = 1000000;
+        selectNum = Integer.parseInt(args[2]);
+        selectRate = Float.parseFloat(args[1]);
         repetition = 1;
+
+        expReportFilePath = "tsfile_rpt";
+        File f = new File(expReportFilePath);
+        if(!f.exists()) f.createNewFile();
+        reportWriter = new FileWriter(expReportFilePath, true);
+
+        System.out.println(String.format("start : " + filePath + "\t select rate: " +  selectRate + "\t select cols: " + selectNum));
         run();
+        System.out.println("end.......");
+        reportWriter.close();
     }
 }

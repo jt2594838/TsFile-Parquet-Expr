@@ -116,7 +116,7 @@ public class TsFileGenerator {
         String exInfo = "ts_lab" + lab + "_x" + x + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
-        filePath = "expFile\\ts\\" + exInfo + ".ts";
+        filePath = exInfo + ".ts";
 //        ptNum = 100000;
         align = true;
         deviceNum = 100;
@@ -132,6 +132,7 @@ public class TsFileGenerator {
         System.out.println();
 
     }
+
 
     public static void main(String[] args) throws IOException, WriteProcessException {
         int lab_in = Integer.parseInt(args[0]),
