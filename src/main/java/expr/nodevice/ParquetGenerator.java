@@ -152,6 +152,8 @@ public class ParquetGenerator {
     }
 
     public static void main(String[] args) throws IOException {
+        args = new String[]{"1", "1", "false", "0", "100"};
+
         int lab_in = Integer.parseInt(args[0]),
                 deviceNum_in = Integer.parseInt(args[1]) ,
                 ptNum_in = Integer.parseInt(args[4]);
@@ -160,9 +162,10 @@ public class ParquetGenerator {
         ptNum = ptNum_in;
 
         expReportFilePath = "parque_rpt";
+        filePath = "test.parquet";
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
-        reportWriter = new FileWriter(expReportFilePath, true);
+        reportWriter = new FileWriter(expReportFilePath, false);
         exper(lab_in, deviceNum_in, hasNull_in, nullRate_in);
 
         reportWriter.close();
