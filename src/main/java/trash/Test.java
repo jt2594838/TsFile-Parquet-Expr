@@ -2,16 +2,16 @@ package trash;
 
 
 
-import cn.edu.tsinghua.tsfile.common.utils.ITsRandomAccessFileReader;
-import cn.edu.tsinghua.tsfile.timeseries.read.support.Path;
-import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.MetadataQuerierByFileImpl;
-import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.SeriesChunkLoaderImpl;
-import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryDataSet;
-import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryExpression;
-import cn.edu.tsinghua.tsfile.timeseries.readV2.query.impl.QueryExecutorRouter;
-import hadoop.HDFSInputStream;
-import java.util.ArrayList;
-import java.util.List;
+//import cn.edu.tsinghua.tsfile.common.utils.ITsRandomAccessFileReader;
+//import cn.edu.tsinghua.tsfile.timeseries.read.support.Path;
+//import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.MetadataQuerierByFileImpl;
+//import cn.edu.tsinghua.tsfile.timeseries.readV2.controller.SeriesChunkLoaderImpl;
+//import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryDataSet;
+//import cn.edu.tsinghua.tsfile.timeseries.readV2.query.QueryExpression;
+//import cn.edu.tsinghua.tsfile.timeseries.readV2.query.impl.QueryExecutorRouter;
+//import hadoop.HDFSInputStream;
+//import java.util.ArrayList;
+//import java.util.List;
 import static cons.Constants.*;
 //import static org.apache.parquet.filter2.predicate.FilterApi.longColumn;
 //import static org.apache.parquet.filter2.predicate.FilterApi.lt;
@@ -49,27 +49,84 @@ import static cons.Constants.*;
 //import java.util.HashMap;
 //import java.util.Map;
 
-//import org.apache.orc.OrcFile;
-//import org.apache.orc.Reader;
-//import org.apache.orc.RecordReader;
-//import org.apache.orc.storage.ql.exec.vector.DoubleColumnVector;
-//import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
-//import org.apache.orc.storage.ql.exec.vector.TimestampColumnVector;
-//import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
-//import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
+import ch.qos.logback.core.subst.Node;
+import org.apache.avro.Schema;
+import org.apache.hadoop.fs.Path;
+import org.apache.orc.OrcFile;
+import org.apache.orc.Reader;
+import org.apache.orc.RecordReader;
+import org.apache.orc.TypeDescription;
+import org.apache.orc.impl.RecordReaderImpl;
+import org.apache.orc.storage.ql.exec.vector.DoubleColumnVector;
+import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
+import org.apache.orc.storage.ql.exec.vector.TimestampColumnVector;
+import org.apache.orc.storage.ql.exec.vector.LongColumnVector;
+import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
+import org.apache.orc.storage.ql.io.sarg.PredicateLeaf;
+import org.apache.orc.storage.ql.io.sarg.SearchArgument;
+import org.apache.orc.storage.ql.io.sarg.SearchArgumentFactory;
+import org.apache.orc.storage.ql.io.sarg.SearchArgumentImpl;
 
+import javax.swing.text.html.Option;
+import java.sql.Timestamp;
+import java.util.List;
 
 
 public class Test {
 
+//    public static PredicateLeaf createPredicateLeaf(PredicateLeaf.Operator operator,
+//                                                    PredicateLeaf.Type type,
+//                                                    String columnName,
+//                                                    Object literal,
+//                                                    List<Object> literalList) {
+//        return new SearchArgumentImpl.PredicateLeafImpl(operator, type, columnName,
+//                literal, literalList);
+//    }
+
     public static void main(String[] args) throws Exception {
-//        Reader reader =  OrcFile.createReader(new Path("data.orc"),
+        Reader reader =  OrcFile.createReader(new Path("d1_s10_r100000_rate0.0.orc"),
+                OrcFile.readerOptions(configuration));
+
+        TypeDescription readSchema = TypeDescription.fromString("struct<time:bigint,s0:float,s1:float>");
+
+
+        SearchArgument sarg = SearchArgumentFactory.newBuilder().equals("time", PredicateLeaf.Type.LONG, (long)3).build();
+        Reader.Options readerOptions = new Reader.Options(configuration)
+                .searchArgument(sarg, new String[]{"time"})
+                .schema(readSchema);
+
+        RecordReaderImpl rows = (RecordReaderImpl) reader.rows(readerOptions);
+
+        VectorizedRowBatch batch = readSchema.createRowBatch();
+        RecordReader rowIterator = reader.rows(reader.options()
+                .schema(readSchema));
+
+
+//        PredicateLeaf pred = PredicateLeaf.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS, PredicateLeaf.Type.TIMESTAMP, "x",
+//                Timestamp.valueOf("2007-08-01 02:00:00.0"), null);
+//        Assert.assertEquals(SearchArgument.TruthValue.NO, RecordReaderImpl.evaluatePredicate(colStats[1], pred, bf));
+
+        // size of batch is 1024
+        while (rowIterator.nextBatch(batch)) {
+//
+            for(int r=0; r < batch.size; ++r) {
+//                System.out.println(batch.size);
+//                System.out.print(((LongColumnVector)batch.cols[0]).vector[r] + " ");
+                for(int i = 1; i < batch.cols.length; i++);
+//                    System.out.print(((DoubleColumnVector)batch.cols[i]).vector[r] + " ");
+//                System.out.println();
+            }
+        }
+        rows.close();
+//
+//
+//        Reader reader =  OrcFile.createReader(new Path("d1_s10_r10_line5.orc"),
 //                OrcFile.readerOptions(configuration));
 //        RecordReader rows = reader.rows();
 //        VectorizedRowBatch batch = reader.getSchema().createRowBatch();
 //        while (rows.nextBatch(batch)) {
 //            for(int r=0; r < batch.size; ++r) {
-//                System.out.println(((LongColumnVector)batch.cols[0]).vector[r] + " ");
+//                System.out.print(((LongColumnVector)batch.cols[0]).vector[r] + " ");
 //                for(int i = 1; i < batch.cols.length; i++)
 //                    System.out.print(((DoubleColumnVector)batch.cols[i]).vector[r] + " ");
 //                System.out.println();
@@ -78,22 +135,23 @@ public class Test {
 //        rows.close();
 
 
-        ITsRandomAccessFileReader reader = new HDFSInputStream("ts_lab2_x2_rate0.67.ts");
-//        ITsRandomAccessFileReader reader = new HDFSInputStream("F:\\idea_workspace\\WriteAndRead\\file.ts");
-        QueryExecutorRouter router = new QueryExecutorRouter(new MetadataQuerierByFileImpl(reader),
-                new SeriesChunkLoaderImpl(reader));
-        List<Path> selectPaths = new ArrayList<>();
-        for(int i = 0; i < 5; i++){
-            for(int j = 0; j < 2; j++){
-                selectPaths.add(new Path(DEVICE_PREFIX + i + SEPARATOR + SENSOR_PREFIX + j));
-            }
-        }
-        QueryExpression expression = QueryExpression.create();
-        expression.setSelectSeries(selectPaths);
-        QueryDataSet dataSet = router.execute(expression);
-        while(dataSet.hasNext()){
-            System.out.println(dataSet.next().toString());
-        }
+//
+//        ITsRandomAccessFileReader reader = new HDFSInputStream("ts_lab2_x2_rate0.67.ts");
+////        ITsRandomAccessFileReader reader = new HDFSInputStream("F:\\idea_workspace\\WriteAndRead\\file.ts");
+//        QueryExecutorRouter router = new QueryExecutorRouter(new MetadataQuerierByFileImpl(reader),
+//                new SeriesChunkLoaderImpl(reader));
+//        List<Path> selectPaths = new ArrayList<>();
+//        for(int i = 0; i < 5; i++){
+//            for(int j = 0; j < 2; j++){
+//                selectPaths.add(new Path(DEVICE_PREFIX + i + SEPARATOR + SENSOR_PREFIX + j));
+//            }
+//        }
+//        QueryExpression expression = QueryExpression.create();
+//        expression.setSelectSeries(selectPaths);
+//        QueryDataSet dataSet = router.execute(expression);
+//        while(dataSet.hasNext()){
+//            System.out.println(dataSet.next().toString());
+//        }
 
 
 

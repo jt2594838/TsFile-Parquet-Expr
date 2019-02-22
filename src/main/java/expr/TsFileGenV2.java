@@ -1,5 +1,6 @@
 package expr;
 
+
 import cn.edu.tsinghua.tsfile.timeseries.write.TsFileWriter;
 import cn.edu.tsinghua.tsfile.timeseries.write.desc.MeasurementDescriptor;
 import cn.edu.tsinghua.tsfile.timeseries.write.exception.WriteProcessException;
@@ -113,13 +114,15 @@ public class TsFileGenV2 {
 
     public static void exper(int lab, int x, float rate) throws IOException {
         nullRate = rate;
-        String exInfo = "ts_lab" + lab + "_x" + x + "_rate" + rate;
+//        String exInfo = "ts_lab" + lab + "_x" + x + "_rate" + rate;
+
+        String exInfo = "d" + deviceNum + "_s" + x + "_r" + ptNum + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
         filePath = exInfo + ".ts";
 
         align = true;
-        deviceNum = 100;
+//        deviceNum = 100;
         sensorNum = x; // it includes all the sensors in the system
         repetition = 1;
         keepFile = true;
@@ -134,13 +137,21 @@ public class TsFileGenV2 {
     }
 
 
-    public static void main(String[] args) throws IOException, WriteProcessException {
+    /**
+     *
+     * @param args, exp #, device #,sensorPerDevice, nullrate, rows;
+     * @throws IOException
+     * @throws WriteProcessException
+     */
+    public static void main(String[] args) throws IOException {
         int lab_in = Integer.parseInt(args[0]),
-                seriesPerDevice_in = Integer.parseInt(args[1]) ,
-                ptNum_in = Integer.parseInt(args[3]);
-        float nullRate_in = Float.parseFloat(args[2]);
+                device_in = Integer.parseInt(args[1]),
+                seriesPerDevice_in = Integer.parseInt(args[2]) ,
+                ptNum_in = Integer.parseInt(args[4]);
+        float nullRate_in = Float.parseFloat(args[3]);
         ptNum = ptNum_in;
 
+        deviceNum = device_in;
         expReportFilePath = "tsfile_rpt";
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();

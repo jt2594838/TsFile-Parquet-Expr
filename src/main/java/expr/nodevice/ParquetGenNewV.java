@@ -134,12 +134,13 @@ public class ParquetGenNewV {
 
     public static void exper(int lab, int seriesPerDevice, float rate) throws IOException {
         nullRate = rate;
-        String exInfo = "parquet_lab" + lab + "_x" + seriesPerDevice + "_rate" + rate;
+//        String exInfo = "parquet_lab" + lab + "_x" + seriesPerDevice + "_rate" + rate;
+        String exInfo = "d" + deviceNum + "_s" + seriesPerDevice + "_r" + ptNum + "_rate" + rate;
         reportWriter.write(exInfo + ":\n");
         System.out.println(exInfo + "begins........");
         filePath = exInfo + ".parquet";
         align = true;
-        deviceNum = 100; // TODO
+//        deviceNum = 100; // TODO
         sensorNum = seriesPerDevice * deviceNum; // it includes all the sensors in the system
         repetition = 1;
         keepFile = true;
@@ -156,17 +157,20 @@ public class ParquetGenNewV {
 
     /**
      *
-     * @param args, lab, seriesPerDevice, nullRate, ptNum
+     * @param args, exp #, device #,sen1sorPerDevice, nullrate, rows;
      * @throws IOException
      */
     public static void main(String args[]) throws IOException {
+//        args = args = new String[]{"1", "100", "0", "1000"};
         int lab_in = Integer.parseInt(args[0]),
-                seriesPerDevice_in = Integer.parseInt(args[1]) ,
-                ptNum_in = Integer.parseInt(args[3]);
-        float nullRate_in = Float.parseFloat(args[2]);
+                device_in = Integer.parseInt(args[1]),
+                seriesPerDevice_in = Integer.parseInt(args[2]) ,
+                ptNum_in = Integer.parseInt(args[4]);
+        float nullRate_in = Float.parseFloat(args[3]);
         ptNum = ptNum_in;
 
-        expReportFilePath = "parque_rpt";
+        deviceNum = device_in;
+        expReportFilePath = "parquet_rpt";
         File f = new File(expReportFilePath);
         if(!f.exists()) f.createNewFile();
         reportWriter = new FileWriter(expReportFilePath, true);

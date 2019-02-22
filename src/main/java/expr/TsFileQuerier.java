@@ -77,12 +77,18 @@ public class TsFileQuerier {
     }
 
     // ts_lab2_x2_rate0.67.ts 0.5 5
+    /**
+     *
+     * @param args filename, colNum, seleRate, ptNum
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
+//        args = new String[]{};
         filePath = args[0];
         useFilter = true;
-        ptNum = 1000000;
-        selectNum = Integer.parseInt(args[2]);
-        selectRate = Float.parseFloat(args[1]);
+        selectNum = Integer.parseInt(args[1]);
+        selectRate = Float.parseFloat(args[2]);
+        ptNum = Long.parseLong(args[3]);
         repetition = 1;
 
         expReportFilePath = "tsfile_rpt";

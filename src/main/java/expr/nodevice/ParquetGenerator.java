@@ -172,26 +172,3 @@ public class ParquetGenerator {
     }
 
 }
-
-
-
-
-/*
-                for(int i = 0; i < sensorNum; i++){
-                    Object value = dataGenerator.next();
-                    switch (dataType) {
-                        case FLOAT:
-                            group.add(SENSOR_PREFIX + i, (float) value);
-                            break;
-                        case DOUBLE:
-                            group.add(SENSOR_PREFIX + i, (double) value);
-                            break;
-                        case INT32:
-                            group.add(SENSOR_PREFIX + i, (int) value);
-                            break;
-                        case INT64:
-                            group.add(SENSOR_PREFIX + i, (long) value);
-                            break;
-                    }
-                }
- */

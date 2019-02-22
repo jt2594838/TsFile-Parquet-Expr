@@ -17,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import static cons.Constants.*;
+import static org.apache.parquet.filter2.predicate.FilterApi.intColumn;
 import static org.apache.parquet.filter2.predicate.FilterApi.longColumn;
 import static org.apache.parquet.filter2.predicate.FilterApi.lt;
 
@@ -49,7 +50,7 @@ public class ParquetQ_v2 {
         ParquetReader<Group> build=reader.build();
         Group line;
         while((line=build.read())!=null){
-            System.out.println(line.toString());
+//            System.out.println(line.toString());
         }
 
         long time = System.currentTimeMillis() - start;
